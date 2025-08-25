@@ -140,10 +140,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-latest
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
+            xiebaiyuan/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
+            xiebaiyuan/adguard-dns-query:frontend-latest
+            xiebaiyuan/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}
+            xiebaiyuan/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Frontend
             org.opencontainers.image.description=Nginx frontend for AdGuard DNS query service
