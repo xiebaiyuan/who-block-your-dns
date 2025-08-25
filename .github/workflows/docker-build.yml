@@ -3,6 +3,9 @@ name: Build and Push Docker Images
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-backend:
     runs-on: ubuntu-latest
@@ -140,7 +143,8 @@ jobs:
             xiebaiyuan/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}
             xiebaiyuan/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
-            org.opencontainers.image.title=AdGuard DNS Query Frontend
+            org.opencontainers.image.title=AdGuard            permissions:
+              contents: write DNS Query Frontend
             org.opencontainers.image.description=Nginx frontend for AdGuard DNS query service
             org.opencontainers.image.version=${{ steps.meta.outputs.VERSION }}
             org.opencontainers.image.created=${{ steps.meta.outputs.BUILD_DATE }}
