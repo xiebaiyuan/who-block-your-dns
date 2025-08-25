@@ -112,10 +112,17 @@ if [ ! -z "$FRONTEND_PID" ]; then
     echo "   kill $FRONTEND_PID"
 fi
 echo ""
-echo "💡 提示: "
-echo "   - 首次启动可能需要几分钟来下载和缓存规则..."
-echo "   - 可以访问 http://localhost:8080/docs 查看自动生成的API文档"
-echo "   - Python版本启动更快，依赖更少，更易维护"
+echo "🧪 Testing Commands:"
+echo "   Full test:    ./scripts/testing/final_test.sh"
+echo "   Basic test:   ./scripts/testing/test_api.sh"
+echo "   Quick test:   python3 scripts/testing/quick_test.py"
+echo ""
+echo "💡 Tips:"
+echo "   - First startup may take a few minutes to download and cache rules"
+echo "   - Visit http://localhost:8080/docs for interactive API documentation"
+echo "   - Python version starts faster with fewer dependencies"
+echo ""
+echo "📚 Documentation: See docs/README.md for complete guides"
 
 # 保存PID到文件
 echo $BACKEND_PID > backend-python.pid

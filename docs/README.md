@@ -8,6 +8,7 @@ Welcome to the AdGuard DNS Query Service documentation. This directory contains 
 docs/
 ├── README.md                    # This index file
 ├── PROJECT_SUMMARY.md          # Complete project overview  
+├── PROJECT_STRUCTURE.md        # Detailed project structure
 ├── api/                        # API documentation
 │   └── README.md               # Complete API reference
 ├── setup/                      # Setup and installation guides
@@ -64,6 +65,10 @@ New to the project? Start here:
   - Technology stack
   - Feature overview
   - File organization
+- **[Project Structure](PROJECT_STRUCTURE.md)**: Detailed file and directory structure
+  - Directory purposes and organization
+  - File lifecycle and usage patterns
+  - Navigation and relationship guide
 
 ## 🎯 Common Use Cases
 
