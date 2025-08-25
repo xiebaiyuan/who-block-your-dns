@@ -1,0 +1,59 @@
+# Development Docker Compose Configuration
+# Builds images locally from source code
+
+services:
+  # Python后端服务
+  backend:
+    build: 
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: adguard-backend-dev
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - backend_logs:/app/logs
+      # Mount source code for development
+      - ./backend-python:/app:ro
+    networks:
+      - adguard-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/rules/statistics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: adguard-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      # Mount source code for development
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - adguard-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  backend_logs:
+    driver: local
+
+networks:
+  adguard-network:
+    driver: bridge

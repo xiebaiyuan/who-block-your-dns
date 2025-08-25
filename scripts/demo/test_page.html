@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速测试 - google-analytics.com 查询</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #2980b9;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .blocked {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        .allowed {
+            border-left-color: #27ae60;
+            background: #f2fdf2;
+        }
+        .json-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 AdGuard 域名查询测试</h1>
+        <p>快速测试 google-analytics.com 的查询结果</p>
+        
+        <div>
+            <button class="test-button" onclick="testSingleQuery()">测试单个查询</button>
+            <button class="test-button" onclick="testBatchQuery()">测试批量查询</button>
+            <button class="test-button" onclick="testMultipleDomains()">测试多个域名</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+
+        // 解析后端返回的二维数组数据格式
+        function parseResultData(data) {
+            const result = {};
+            if (Array.isArray(data) && data.length > 0 && Array.isArray(data[0])) {
+                // 如果是二维数组格式
+                data.forEach(([key, value]) => {
+                    switch(key) {
+                        case 'domain':
+                            result.domain = value;
+                            break;
+                        case 'blocked':
+                            result.blocked = value;
+                            break;
+                        case 'matched_rule':
+                            result.matchedRule = value;
+                            break;
+                        case 'rule_source':
+                            result.ruleSource = value;
+                            break;
+                        case 'rule_type':
+                            result.ruleType = value;
+                            break;
+                        case 'duration':
+                            result.duration = value;
+                            break;
+                        case 'query_time':
+                            result.queryTime = value;
+                            break;
+                    }
+                });
+            } else {
+                // 如果已经是对象格式
+                result.domain = data.domain;
+                result.blocked = data.blocked;
+                result.matchedRule = data.matched_rule || data.matchedRule;
+                result.ruleSource = data.rule_source || data.ruleSource;
+                result.ruleType = data.rule_type || data.ruleType;
+                result.duration = data.duration;
+                result.queryTime = data.query_time || data.queryTime;
+            }
+            return result;
+        }
+
+        function displayResult(title, parsedResult, rawData) {
+            const resultDiv = document.getElementById('result');
+            const statusClass = parsedResult.blocked ? 'blocked' : 'allowed';
+            const statusText = parsedResult.blocked ? '🚫 已阻止' : '✅ 允许';
+            
+            const html = `
+                <h3>${title}</h3>
+                <div class="result ${statusClass}">
+                    <h4>${statusText} ${parsedResult.domain}</h4>
+                    ${parsedResult.blocked ? `
+                        <p><strong>匹配规则:</strong> ${parsedResult.matchedRule || '未知'}</p>
+                        <p><strong>规则源:</strong> ${parsedResult.ruleSource || '未知'}</p>
+                        <p><strong>规则类型:</strong> ${parsedResult.ruleType || '未知'}</p>
+                    ` : ''}
+                    <p><strong>查询耗时:</strong> ${parsedResult.duration || 0}ms</p>
+                </div>
+                <h4>原始API响应:</h4>
+                <div class="json-output">${JSON.stringify(rawData, null, 2)}</div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+
+        async function testSingleQuery() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/query/domain?domain=google-analytics.com`);
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    const parsedResult = parseResultData(result.data);
+                    displayResult('单个域名查询测试', parsedResult, result);
+                } else {
+                    document.getElementById('result').innerHTML = `<div class="result">错误: ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="result">网络错误: ${error.message}</div>`;
+            }
+        }
+
+        async function testBatchQuery() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/query/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({domains: ['google-analytics.com']})
+                });
+                const result = await response.json();
+                
+                if (result.code === 200 && result.data.length > 0) {
+                    const parsedResult = parseResultData(result.data[0]);
+                    displayResult('批量域名查询测试', parsedResult, result);
+                } else {
+                    document.getElementById('result').innerHTML = `<div class="result">错误: ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="result">网络错误: ${error.message}</div>`;
+            }
+        }
+
+        async function testMultipleDomains() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/query/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({domains: ['google-analytics.com', 'github.com', 'doubleclick.net']})
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    let html = '<h3>多域名查询测试</h3>';
+                    result.data.forEach(rawData => {
+                        const parsedResult = parseResultData(rawData);
+                        const statusClass = parsedResult.blocked ? 'blocked' : 'allowed';
+                        const statusText = parsedResult.blocked ? '🚫 已阻止' : '✅ 允许';
+                        
+                        html += `
+                            <div class="result ${statusClass}">
+                                <h4>${statusText} ${parsedResult.domain}</h4>
+                                ${parsedResult.blocked ? `
+                                    <p><strong>匹配规则:</strong> ${parsedResult.matchedRule || '未知'}</p>
+                                    <p><strong>规则源:</strong> ${parsedResult.ruleSource || '未知'}</p>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                    html += `<h4>原始API响应:</h4><div class="json-output">${JSON.stringify(result, null, 2)}</div>`;
+                    document.getElementById('result').innerHTML = html;
+                } else {
+                    document.getElementById('result').innerHTML = `<div class="result">错误: ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="result">网络错误: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载时自动测试
+        window.onload = function() {
+            testSingleQuery();
+        };
+    </script>
+</body>
+</html>

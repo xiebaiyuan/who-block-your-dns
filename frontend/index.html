@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdGuard 域名查询服务</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ AdGuard 域名查询服务</h1>
+            <p>快速查询域名是否被AdGuard规则阻止</p>
+        </header>
+
+        <main>
+            <!-- 域名查询区域 -->
+            <section class="query-section">
+                <div class="query-form">
+                    <h2>域名查询</h2>
+                    <div class="input-group">
+                        <input type="text" id="domainInput" placeholder="请输入域名，如: example.com" />
+                        <button id="queryBtn" onclick="queryDomain()">查询</button>
+                    </div>
+                    <div class="bulk-query">
+                        <textarea id="bulkInput" placeholder="批量查询（每行一个域名，最多100个）"></textarea>
+                        <button id="bulkQueryBtn" onclick="bulkQuery()">批量查询</button>
+                    </div>
+                </div>
+
+                <!-- 查询结果 -->
+                <div class="result-section">
+                    <h3>查询结果</h3>
+                    <div id="queryResult" class="result-container">
+                        <p class="no-result">暂无查询结果</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 规则源管理 -->
+            <section class="rules-section">
+                <div class="section-header">
+                    <h2>规则源管理</h2>
+                    <div class="header-actions">
+                        <button onclick="refreshRules()" class="refresh-btn">🔄 刷新规则</button>
+                        <button onclick="showAddRuleForm()" class="add-btn">➕ 添加规则源</button>
+                    </div>
+                </div>
+
+                <!-- 统计信息 -->
+                <div class="statistics" id="statistics">
+                    <!-- 统计信息将通过JavaScript填充 -->
+                </div>
+
+                <!-- 规则源列表 -->
+                <div class="rule-sources" id="ruleSources">
+                    <!-- 规则源列表将通过JavaScript填充 -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 添加规则源模态框 -->
+    <div id="addRuleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加规则源</h3>
+                <span class="close" onclick="closeAddRuleForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addRuleForm">
+                    <div class="form-group">
+                        <label for="ruleName">规则源名称：</label>
+                        <input type="text" id="ruleName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ruleUrl">规则源URL：</label>
+                        <input type="url" id="ruleUrl" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ruleEnabled" checked>
+                            启用规则源
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeAddRuleForm()">取消</button>
+                        <button type="submit">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
