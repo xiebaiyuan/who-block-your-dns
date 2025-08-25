@@ -1,26 +1,16 @@
-name: Docker Build and Push
+name: Build and Push Docker Images
 
 on:
   push:
     branches:
-      - main
-      - develop
-    tags:
-      - 'v*'
+      - main  # 当推送到 main 分支时触发
   pull_request:
     branches:
-      - main
-
-env:
-  REGISTRY: docker.io
-  IMAGE_NAME: adguard-dns-query
+      - main  # 当向 main 分支提交 pull request 时触发
 
 jobs:
-  build-and-push:
+  build-backend:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -33,162 +23,219 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Generate tags for backend
-        id: backend-tags
+      - name: Extract version and build metadata
+        id: meta
         run: |
-          DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
-          IMAGE_BASE="${{ env.REGISTRY }}/${DOCKER_USERNAME}/${{ env.IMAGE_NAME }}"
+          # 获取当前日期作为版本号的一部分
+          BUILD_DATE=$(date +'%Y%m%d')
           
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tags=${IMAGE_BASE}:backend-latest,${IMAGE_BASE}:main-backend" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" != "main" ]; then
-            echo "tags=${IMAGE_BASE}:${{ github.ref_name }}-backend" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tags=${IMAGE_BASE}:pr-${{ github.event.number }}-backend" >> $GITHUB_OUTPUT
-          else
-            echo "tags=${IMAGE_BASE}:backend-latest" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Generate tags for frontend
-        id: frontend-tags
-        run: |
-          DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
-          IMAGE_BASE="${{ env.REGISTRY }}/${DOCKER_USERNAME}/${{ env.IMAGE_NAME }}"
+          # 获取 Git 信息
+          GIT_SHA=$(git rev-parse --short HEAD)
+          GIT_BRANCH=${GITHUB_REF#refs/heads/}
           
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tags=${IMAGE_BASE}:frontend-latest,${IMAGE_BASE}:main-frontend" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" != "main" ]; then
-            echo "tags=${IMAGE_BASE}:${{ github.ref_name }}-frontend" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tags=${IMAGE_BASE}:pr-${{ github.event.number }}-frontend" >> $GITHUB_OUTPUT
+          # 检查是否有 Git 标签
+          if git describe --tags --exact-match HEAD 2>/dev/null; then
+            # 如果当前 commit 有标签，使用标签作为版本
+            VERSION=$(git describe --tags --exact-match HEAD)
+            echo "Found git tag: $VERSION"
           else
-            echo "tags=${IMAGE_BASE}:frontend-latest" >> $GITHUB_OUTPUT
+            # 生成递增的构建序号
+            # 使用 GitHub run number 确保严格递增
+            RUN_NUMBER=${{ github.run_number }}
+            
+            # 使用 GitHub run number (推荐)
+            VERSION="v1.${BUILD_DATE}.${RUN_NUMBER}"
+            
+            echo "Generated version: $VERSION (using run number: $RUN_NUMBER)"
           fi
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "GIT_SHA=${GIT_SHA}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          echo "RUN_NUMBER=${{ github.run_number }}" >> $GITHUB_OUTPUT
+          
+          echo "Build metadata:"
+          echo "  Version: $VERSION"
+          echo "  Build Date: $BUILD_DATE"
+          echo "  Git SHA: $GIT_SHA"
+          echo "  Git Branch: $GIT_BRANCH"
+          echo "  Run Number: ${{ github.run_number }}"
 
-      - name: Build and push backend image
+      - name: Build and push Backend Docker multi-arch image
         uses: docker/build-push-action@v5
         with:
           context: ./backend-python
-          file: ./backend-python/Dockerfile
-          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.backend-tags.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-latest
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Backend
             org.opencontainers.image.description=FastAPI backend for AdGuard DNS query service
+            org.opencontainers.image.version=${{ steps.meta.outputs.VERSION }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.BUILD_DATE }}
+            org.opencontainers.image.revision=${{ steps.meta.outputs.GIT_SHA }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.licenses=MIT
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Build and push frontend image
+  build-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version and build metadata
+        id: meta
+        run: |
+          # 获取当前日期作为版本号的一部分
+          BUILD_DATE=$(date +'%Y%m%d')
+          
+          # 获取 Git 信息
+          GIT_SHA=$(git rev-parse --short HEAD)
+          GIT_BRANCH=${GITHUB_REF#refs/heads/}
+          
+          # 检查是否有 Git 标签
+          if git describe --tags --exact-match HEAD 2>/dev/null; then
+            # 如果当前 commit 有标签，使用标签作为版本
+            VERSION=$(git describe --tags --exact-match HEAD)
+            echo "Found git tag: $VERSION"
+          else
+            # 生成递增的构建序号
+            # 使用 GitHub run number 确保严格递增
+            RUN_NUMBER=${{ github.run_number }}
+            
+            # 使用 GitHub run number (推荐)
+            VERSION="v1.${BUILD_DATE}.${RUN_NUMBER}"
+            
+            echo "Generated version: $VERSION (using run number: $RUN_NUMBER)"
+          fi
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "GIT_SHA=${GIT_SHA}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${GIT_BRANCH}" >> $GITHUB_OUTPUT
+          echo "RUN_NUMBER=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Frontend Docker multi-arch image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile
-          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.frontend-tags.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-latest
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}
+            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Frontend
             org.opencontainers.image.description=Nginx frontend for AdGuard DNS query service
+            org.opencontainers.image.version=${{ steps.meta.outputs.VERSION }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.BUILD_DATE }}
+            org.opencontainers.image.revision=${{ steps.meta.outputs.GIT_SHA }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.licenses=MIT
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Generate docker-compose with pushed images
-        if: github.event_name != 'pull_request'
-        run: |
-          cat > docker-compose.prod.yml << EOF
-          services:
-            backend:
-              image: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:backend-latest
-              container_name: adguard-backend
-              restart: unless-stopped
-              ports:
-                - "8080:8080"
-              environment:
-                - PYTHONPATH=/app
-                - LOG_LEVEL=INFO
-              volumes:
-                - backend_logs:/app/logs
-              networks:
-                - adguard-network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:8080/api/rules/statistics"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-
-            frontend:
-              image: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:frontend-latest
-              container_name: adguard-frontend
-              restart: unless-stopped
-              ports:
-                - "3000:80"
-              depends_on:
-                backend:
-                  condition: service_healthy
-              networks:
-                - adguard-network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost/"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-
-          volumes:
-            backend_logs:
-              driver: local
-
-          networks:
-            adguard-network:
-              driver: bridge
-          EOF
-
-      - name: Upload production docker-compose
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-compose-production
-          path: docker-compose.prod.yml
-
-  security-scan:
+  create-release:
     runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     steps:
-      - name: Set image variables
-        id: images
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version and build metadata
+        id: meta
         run: |
-          echo "BACKEND_IMAGE=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:backend-latest" >> $GITHUB_OUTPUT
-          echo "FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:frontend-latest" >> $GITHUB_OUTPUT
+          BUILD_DATE=$(date +'%Y%m%d')
+          GIT_SHA=$(git rev-parse --short HEAD)
+          
+          if git describe --tags --exact-match HEAD 2>/dev/null; then
+            VERSION=$(git describe --tags --exact-match HEAD)
+          else
+            RUN_NUMBER=${{ github.run_number }}
+            VERSION="v1.${BUILD_DATE}.${RUN_NUMBER}"
+          fi
+          
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "GIT_SHA=${GIT_SHA}" >> $GITHUB_OUTPUT
+          echo "RUN_NUMBER=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-      - name: Run Trivy vulnerability scanner on backend
-        uses: aquasecurity/trivy-action@master
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image-ref: ${{ steps.images.outputs.BACKEND_IMAGE }}
-          format: 'sarif'
-          output: 'trivy-backend-results.sarif'
-
-      - name: Run Trivy vulnerability scanner on frontend
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ steps.images.outputs.FRONTEND_IMAGE }}
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: '.'
+          tag_name: ${{ steps.meta.outputs.VERSION }}
+          release_name: AdGuard DNS Query Service ${{ steps.meta.outputs.VERSION }}
+          body: |
+            ## 🚀 AdGuard DNS Query Service Release ${{ steps.meta.outputs.VERSION }}
+            
+            ### 📦 Docker Images
+            
+            **Backend Images:**
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-latest`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}`
+            
+            **Frontend Images:**
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-latest`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}`
+            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}`
+            
+            ### 🔧 Build Information
+            - **Build Date**: ${{ steps.meta.outputs.BUILD_DATE }}
+            - **Git SHA**: ${{ steps.meta.outputs.GIT_SHA }}
+            - **Run Number**: ${{ steps.meta.outputs.RUN_NUMBER }}
+            - **Platforms**: linux/amd64, linux/arm64
+            
+            ### 📈 Version Format
+            - **Format**: `v1.{BUILD_DATE}.{RUN_NUMBER}`
+            - **Explanation**: Run number ensures strictly increasing version numbers
+            
+            ### 🚀 Quick Start
+            ```bash
+            # Using latest images
+            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            ./deploy-production.sh
+            
+            # Using specific version
+            docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
+            docker run -d -p 3000:80 ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
+            ```
+            
+            ### 📚 Documentation
+            - [Quick Setup Guide](docs/setup/QUICK_SETUP.md)
+            - [API Documentation](docs/api/README.md)
+            - [Deployment Guide](docs/deployment/README.md)
+            
+            ### ✨ Features
+            - 🔍 Single and batch domain queries
+            - 🛡️ Multiple rule types support
+            - ⚡ Built-in caching system
+            - 🔄 Automatic rule updates
+            - 📊 Real-time statistics
+            - 🐳 Multi-platform Docker support
+          draft: false
+          prerelease: false
