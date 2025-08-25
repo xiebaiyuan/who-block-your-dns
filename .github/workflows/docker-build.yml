@@ -72,10 +72,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-latest
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}
-            ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}
+            xiebaiyuan/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
+            xiebaiyuan/adguard-dns-query:backend-latest
+            xiebaiyuan/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}
+            xiebaiyuan/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Backend
             org.opencontainers.image.description=FastAPI backend for AdGuard DNS query service
