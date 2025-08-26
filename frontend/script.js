@@ -1,5 +1,5 @@
-// API配置
-const API_BASE_URL = 'http://localhost:8080/api';
+// API配置 - 使用相对路径，通过Nginx代理转发到后端
+const API_BASE_URL = '/api';
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
