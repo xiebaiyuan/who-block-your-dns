@@ -420,7 +420,7 @@ function displayRuleSources(sources) {
                     <span class="rule-url-text">${truncateUrl(source.url, 50)}</span>
                     <span class="rule-toggle">展开</span>
                 </div>
-                <div class="rule-url-details" id="rule-url-details-${index}">
+                <div class="rule-url-details" id="rule-url-details-${index}" style="display: none;">
                     <a href="${source.url}" target="_blank" title="打开原始链接" class="rule-full-url">
                         ${source.url}
                     </a>
@@ -464,7 +464,7 @@ function toggleRuleUrl(index) {
     const summaryElement = detailsElement.previousElementSibling;
     const toggleElement = summaryElement.querySelector('.rule-toggle');
     
-    if (detailsElement.style.display === 'block') {
+    if (detailsElement.style.display === 'block' || detailsElement.style.display === '') {
         detailsElement.style.display = 'none';
         toggleElement.textContent = '展开';
     } else {
