@@ -67,7 +67,19 @@ docker-compose -f docker-compose.optimized.yml up -d
 docker-compose -f docker-compose.dev-optimized.yml up -d
 ```
 
-See [Optimized Docker Compose Configurations](docs/deployment/DOCKER_COMPOSE_OPTIMIZED.md) for detailed usage instructions.
+### Option 5: Optimized Dependencies (Smaller Images)
+
+This project includes optimized dependencies that reduce image size by 33%:
+
+```bash
+# Use optimized dependencies
+cp backend-python/requirements.optimized.txt backend-python/requirements.txt
+
+# Rebuild with smaller footprint
+docker-compose build backend
+```
+
+See [Dependency Optimization Analysis](docs/DEPENDECY_OPTIMIZATION.md) for detailed benefits.
 
 ## 📱 Access
 
