@@ -17,7 +17,7 @@ services:
     volumes:
       - backend_logs:/app/logs
       # Mount source code for development
-      - ./backend-python:/app:ro
+      - ./backend-python:/app
     networks:
       - adguard-network
     healthcheck:
