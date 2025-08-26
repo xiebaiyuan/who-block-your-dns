@@ -91,6 +91,17 @@ query_cache = TTLCache(maxsize=10000, ttl=3600)  # 1小时缓存
 
 # 默认规则源配置
 DEFAULT_RULE_SOURCES = [
+
+    {
+        "url": "https://raw.githubusercontent.com/xiebaiyuan/adrule/refs/heads/main/rule/adgh.txt",
+        "name": "mine adgh",
+        "enabled": True
+    },
+    {
+        "url": "https://raw.githubusercontent.com/xiebaiyuan/adrule/refs/heads/adrules/adblock_lite.txt",
+        "name": "mine adblock lite",
+        "enabled": True
+    },
     {
         "url": "https://raw.githubusercontent.com/durablenapkin/scamblocklist/refs/heads/master/adguard.txt",
         "name": "Scam Blocklist",
@@ -255,7 +266,9 @@ DEFAULT_RULE_SOURCES = [
         "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt",
         "name": "anti-AD httpdns",
         "enabled": True
-    }
+    },
+
+
 ]
 
 def is_valid_domain(domain: str) -> bool:
