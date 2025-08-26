@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
             queryDomain();
         }
     });
+    
+    // 绑定搜索回车键
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchRules();
+        }
+    });
 });
 
 // 查询单个域名
@@ -103,6 +110,40 @@ async function bulkQuery() {
     } finally {
         bulkQueryBtn.textContent = originalText;
         bulkQueryBtn.disabled = false;
+    }
+}
+
+// 搜索规则
+async function searchRules() {
+    const searchInput = document.getElementById('searchInput');
+    const keyword = searchInput.value.trim();
+    
+    if (!keyword) {
+        showMessage('请输入搜索关键字', 'error');
+        return;
+    }
+    
+    const searchBtn = document.getElementById('searchBtn');
+    const originalText = searchBtn.textContent;
+    
+    try {
+        searchBtn.textContent = '搜索中...';
+        searchBtn.disabled = true;
+        
+        const response = await fetch(`${API_BASE_URL}/rules/search?keyword=${encodeURIComponent(keyword)}&limit=50`);
+        const result = await response.json();
+        
+        if (result.code === 200) {
+            displaySearchResults(result.data);
+        } else {
+            showMessage(result.message || '搜索失败', 'error');
+        }
+    } catch (error) {
+        console.error('搜索失败:', error);
+        showMessage('网络错误，请检查后端服务是否启动', 'error');
+    } finally {
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
     }
 }
 
@@ -219,6 +260,33 @@ function displayQueryResults(results) {
     }).join('');
     
     resultContainer.innerHTML = html;
+}
+
+// 显示搜索结果
+function displaySearchResults(results) {
+    const searchResultContainer = document.getElementById('searchResult');
+    
+    if (!results || results.length === 0) {
+        searchResultContainer.innerHTML = '<p class="no-result">没有找到匹配的规则</p>';
+        return;
+    }
+    
+    const html = results.map(rule => {
+        return `
+            <div class="search-result-item">
+                <div class="search-rule-text">${rule.rule}</div>
+                <div class="search-rule-meta">
+                    <span class="search-rule-type ${rule.rule_type}">${rule.rule_type}</span>
+                    <span class="search-rule-source">
+                        来源: ${rule.rule_source}
+                        ${rule.rule_source_url ? `<a href="${rule.rule_source_url}" target="_blank" title="查看规则源">🔗</a>` : ''}
+                    </span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    searchResultContainer.innerHTML = html;
 }
 
 // 加载统计信息

@@ -37,6 +37,25 @@
                 </div>
             </section>
 
+            <!-- 规则搜索区域 -->
+            <section class="search-section">
+                <div class="search-form">
+                    <h2>规则搜索</h2>
+                    <div class="input-group">
+                        <input type="text" id="searchInput" placeholder="搜索规则关键字（支持域名、规则文本、规则源名称）" />
+                        <button id="searchBtn" onclick="searchRules()">搜索</button>
+                    </div>
+                </div>
+
+                <!-- 搜索结果 -->
+                <div class="search-result-section">
+                    <h3>搜索结果</h3>
+                    <div id="searchResult" class="result-container">
+                        <p class="no-result">请输入关键字进行搜索</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- 规则源管理 -->
             <section class="rules-section">
                 <div class="section-header">
