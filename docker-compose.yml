@@ -4,13 +4,11 @@
 services:
   # Python后端服务
   backend:
-    build: 
-      context: ./backend-python
-      dockerfile: Dockerfile
+    image: xiebaiyuan/adguard-dns-query:backend-20250825
     container_name: adguard-backend-dev
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "49225:8080"
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -29,13 +27,11 @@ services:
 
   # 前端服务
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: xiebaiyuan/adguard-dns-query:frontend-20250825
     container_name: adguard-frontend-dev
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "49226:80"
     depends_on:
       backend:
         condition: service_healthy

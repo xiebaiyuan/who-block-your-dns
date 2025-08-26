@@ -585,6 +585,75 @@ async def get_rule_sources():
         logger.error(f"获取规则源列表失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取规则源列表失败: {str(e)}")
 
+
+@app.get("/api/rules/search")
+async def search_rules(keyword: str, limit: int = 100):
+    """按关键字搜索规则（支持 domain、hosts、regex、规则源名称/URL）。
+
+    - keyword: 要搜索的关键字（必填）
+    - limit: 返回的最大匹配数量，默认100
+    """
+    try:
+        if not keyword or not keyword.strip():
+            raise HTTPException(status_code=400, detail="搜索关键字不能为空")
+
+        key = keyword.strip().lower()
+        matches: List[MatchedRule] = []
+
+        # 搜索 domain 规则
+        for source_url, domains in domain_rules.items():
+            source_name = get_rule_source_name(source_url)
+            for d in domains:
+                if key in d or key in source_name.lower() or key in source_url.lower():
+                    matches.append(MatchedRule(
+                        rule=d,
+                        rule_source=source_name,
+                        rule_source_url=source_url,
+                        rule_type="domain"
+                    ))
+                    if len(matches) >= limit:
+                        return ApiResponse(code=200, message="搜索完成", data=matches, timestamp=int(time.time() * 1000))
+
+        # 搜索 hosts 规则
+        for source_url, hosts in hosts_rules.items():
+            source_name = get_rule_source_name(source_url)
+            for h in hosts:
+                if key in h or key in source_name.lower() or key in source_url.lower():
+                    matches.append(MatchedRule(
+                        rule=h,
+                        rule_source=source_name,
+                        rule_source_url=source_url,
+                        rule_type="hosts"
+                    ))
+                    if len(matches) >= limit:
+                        return ApiResponse(code=200, message="搜索完成", data=matches, timestamp=int(time.time() * 1000))
+
+        # 搜索 regex 规则（匹配规则文本或尝试用关键字做正则测试）
+        for source_url, patterns in regex_rules.items():
+            source_name = get_rule_source_name(source_url)
+            for pattern in patterns:
+                pat_text = pattern.pattern.lower()
+                try:
+                    if key in pat_text or pattern.search(key):
+                        matches.append(MatchedRule(
+                            rule=pattern.pattern,
+                            rule_source=source_name,
+                            rule_source_url=source_url,
+                            rule_type="regex"
+                        ))
+                        if len(matches) >= limit:
+                            return ApiResponse(code=200, message="搜索完成", data=matches, timestamp=int(time.time() * 1000))
+                except Exception:
+                    # 忽略正则匹配时的异常
+                    continue
+
+        return ApiResponse(code=200, message="搜索完成", data=matches, timestamp=int(time.time() * 1000))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"搜索规则失败: {keyword} - {e}")
+        raise HTTPException(status_code=500, detail=f"搜索规则失败: {str(e)}")
+
 @app.post("/api/rules/sources")
 async def add_rule_source(source: RuleSource, background_tasks: BackgroundTasks):
     """添加规则源"""
