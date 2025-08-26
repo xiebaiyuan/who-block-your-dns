@@ -18,6 +18,17 @@
             <section class="query-section">
                 <div class="query-form">
                     <h2>域名查询</h2>
+                    <div class="search-rules">
+                        <h3>按关键字搜索规则</h3>
+                        <div class="input-group">
+                            <input type="text" id="searchKeyword" placeholder="搜索关键字（域名/规则/来源）" />
+                            <input type="number" id="searchLimit" placeholder="最大结果数 (默认100)" min="1" max="1000" />
+                            <button id="searchBtn" onclick="searchRules()">搜索规则</button>
+                        </div>
+                        <div id="searchResult" class="result-container">
+                            <p class="no-result">暂无搜索结果</p>
+                        </div>
+                    </div>
                     <div class="input-group">
                         <input type="text" id="domainInput" placeholder="请输入域名，如: example.com" />
                         <button id="queryBtn" onclick="queryDomain()">查询</button>

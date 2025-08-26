@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', function() {
             queryDomain();
         }
     });
+
+    // 绑定搜索回车事件
+    const searchInput = document.getElementById('searchKeyword');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchRules();
+            }
+        });
+    }
 });
 
 // 查询单个域名
@@ -54,6 +64,107 @@ async function queryDomain() {
         queryBtn.textContent = originalText;
         queryBtn.disabled = false;
     }
+}
+
+// 搜索规则
+async function searchRules() {
+    const keywordEl = document.getElementById('searchKeyword');
+    const limitEl = document.getElementById('searchLimit');
+    const keyword = keywordEl ? keywordEl.value.trim() : '';
+    const limit = limitEl && limitEl.value ? parseInt(limitEl.value, 10) : 100;
+
+    if (!keyword) {
+        showMessage('请输入搜索关键字', 'error');
+        return;
+    }
+
+    const searchBtn = document.getElementById('searchBtn');
+    const originalText = searchBtn ? searchBtn.textContent : '';
+
+    try {
+        if (searchBtn) {
+            searchBtn.textContent = '搜索中...';
+            searchBtn.disabled = true;
+        }
+
+        const resp = await fetch(`${API_BASE_URL}/rules/search?keyword=${encodeURIComponent(keyword)}&limit=${encodeURIComponent(limit)}`);
+        const data = await resp.json();
+
+        if (data.code === 200) {
+            displaySearchResults(data.data);
+        } else {
+            showMessage(data.message || '搜索失败', 'error');
+        }
+    } catch (err) {
+        console.error('搜索失败', err);
+        showMessage('网络错误，请检查后端服务', 'error');
+    } finally {
+        if (searchBtn) {
+            searchBtn.textContent = originalText;
+            searchBtn.disabled = false;
+        }
+    }
+}
+
+// 显示搜索结果
+function displaySearchResults(results) {
+    const container = document.getElementById('searchResult');
+
+    if (!results || results.length === 0) {
+        container.innerHTML = '<p class="no-result">未找到匹配规则</p>';
+        return;
+    }
+
+    const html = results.map((r, idx) => `
+        <div class="search-item">
+            <div class="search-index">${idx + 1}.</div>
+            <div class="search-body">
+                <div class="search-rule">${escapeHtml(r.rule)}</div>
+                <div class="search-meta">
+                    <span class="search-source">${escapeHtml(r.rule_source)}</span>
+                    <span class="search-type">${r.rule_type}</span>
+                </div>
+                <div class="search-details" id="search-details-${idx}">
+                    <div class="search-detail-row">
+                        <span class="search-detail-label">链接:</span>
+                        <span class="search-detail-value">${escapeHtml(r.rule_source_url || '')}</span>
+                    </div>
+                </div>
+                <div class="search-toggle" onclick="toggleSearchDetails(${idx})">展开详情</div>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = html;
+}
+
+// 切换搜索详情显示
+function toggleSearchDetails(index) {
+    const detailsElement = document.getElementById(`search-details-${index}`);
+    const toggleElement = detailsElement.parentElement.querySelector('.search-toggle');
+    
+    if (detailsElement.classList.contains('expanded')) {
+        detailsElement.classList.remove('expanded');
+        toggleElement.textContent = '展开详情';
+    } else {
+        detailsElement.classList.add('expanded');
+        toggleElement.textContent = '收起详情';
+    }
+}
+
+// 简单转义HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>\"']/g, function(tag) {
+        const charsToReplace = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return charsToReplace[tag] || tag;
+    });
 }
 
 // 批量查询域名
@@ -292,7 +403,7 @@ function displayRuleSources(sources) {
         return;
     }
     
-    const html = sources.map(source => {
+    const html = sources.map((source, index) => {
         const statusClass = getStatusClass(source.status);
         const lastUpdated = source.lastUpdated ? 
             new Date(source.lastUpdated).toLocaleString() : '未更新';
@@ -302,13 +413,17 @@ function displayRuleSources(sources) {
                 <div class="rule-header">
                     <div class="rule-name-section">
                         <div class="rule-name">${source.name || '未命名'}</div>
-                        <div class="rule-url-link">
-                            <a href="${source.url}" target="_blank" title="打开原始链接">
-                                🔗 ${source.url}
-                            </a>
-                        </div>
                     </div>
                     <span class="rule-status ${statusClass}">${source.status || '未知'}</span>
+                </div>
+                <div class="rule-url-summary" onclick="toggleRuleUrl(${index})">
+                    <span class="rule-url-text">${truncateUrl(source.url, 50)}</span>
+                    <span class="rule-toggle">展开</span>
+                </div>
+                <div class="rule-url-details" id="rule-url-details-${index}">
+                    <a href="${source.url}" target="_blank" title="打开原始链接" class="rule-full-url">
+                        ${source.url}
+                    </a>
                 </div>
                 <div class="rule-details">
                     <div class="rule-meta">
@@ -334,6 +449,28 @@ function getStatusClass(status) {
     if (status.includes('成功')) return 'status-success';
     if (status.includes('失败') || status.includes('错误')) return 'status-error';
     return 'status-warning';
+}
+
+// 截断URL显示
+function truncateUrl(url, maxLength) {
+    if (!url) return '';
+    if (url.length <= maxLength) return url;
+    return url.substring(0, maxLength) + '...';
+}
+
+// 切换规则URL显示
+function toggleRuleUrl(index) {
+    const detailsElement = document.getElementById(`rule-url-details-${index}`);
+    const summaryElement = detailsElement.previousElementSibling;
+    const toggleElement = summaryElement.querySelector('.rule-toggle');
+    
+    if (detailsElement.style.display === 'block') {
+        detailsElement.style.display = 'none';
+        toggleElement.textContent = '展开';
+    } else {
+        detailsElement.style.display = 'block';
+        toggleElement.textContent = '收起';
+    }
 }
 
 // 刷新规则

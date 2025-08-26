@@ -56,6 +56,12 @@ class MatchedRule(BaseModel):
     rule_source_url: str
     rule_type: str
 
+class SearchResult(BaseModel):
+    rule: str
+    rule_source: str
+    rule_source_url: str
+    rule_type: str
+
 class DomainQueryResult(BaseModel):
     domain: str
     blocked: bool
@@ -696,6 +702,86 @@ async def get_statistics():
     except Exception as e:
         logger.error(f"获取统计信息失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
+
+@app.get("/api/rules/search")
+async def search_rules(keyword: str, limit: int = 100):
+    """按关键字搜索规则"""
+    try:
+        if not keyword or not keyword.strip():
+            raise HTTPException(status_code=400, detail="关键字不能为空")
+        
+        clean_keyword = keyword.strip().lower()
+        limit = max(1, min(limit, 1000))  # 限制在1-1000之间
+        results = []
+        
+        # 搜索域名规则
+        for source_url, domains in domain_rules.items():
+            if len(results) >= limit:
+                break
+            source = rule_sources.get(source_url)
+            source_name = source.name if source else source_url
+            
+            for domain in domains:
+                if len(results) >= limit:
+                    break
+                if clean_keyword in domain.lower() or clean_keyword in source_name.lower():
+                    results.append(SearchResult(
+                        rule=domain,
+                        rule_source=source_name,
+                        rule_source_url=source_url,
+                        rule_type="domain"
+                    ))
+        
+        # 搜索Hosts规则
+        if len(results) < limit:
+            for source_url, hosts in hosts_rules.items():
+                if len(results) >= limit:
+                    break
+                source = rule_sources.get(source_url)
+                source_name = source.name if source else source_url
+                
+                for host in hosts:
+                    if len(results) >= limit:
+                        break
+                    if clean_keyword in host.lower() or clean_keyword in source_name.lower():
+                        results.append(SearchResult(
+                            rule=host,
+                            rule_source=source_name,
+                            rule_source_url=source_url,
+                            rule_type="hosts"
+                        ))
+        
+        # 搜索正则规则
+        if len(results) < limit:
+            for source_url, patterns in regex_rules.items():
+                if len(results) >= limit:
+                    break
+                source = rule_sources.get(source_url)
+                source_name = source.name if source else source_url
+                
+                for pattern in patterns:
+                    if len(results) >= limit:
+                        break
+                    pattern_str = pattern.pattern.lower()
+                    if clean_keyword in pattern_str or clean_keyword in source_name.lower():
+                        results.append(SearchResult(
+                            rule=pattern.pattern,
+                            rule_source=source_name,
+                            rule_source_url=source_url,
+                            rule_type="regex"
+                        ))
+        
+        return ApiResponse(
+            code=200,
+            message="搜索成功",
+            data=results[:limit],
+            timestamp=int(time.time() * 1000)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"搜索规则失败: {e}")
+        raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
