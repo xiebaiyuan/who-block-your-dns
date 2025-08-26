@@ -1,7 +1,7 @@
 # AdGuard DNS Query Service
 
 [![Docker Build](https://github.com/xiebaiyuan/who-block-your-dns/actions/workflows/docker-build.yml/badge.svg)](https://github.com/xiebaiyuan/who-block-your-dns/actions/workflows/docker-build.yml)
-[![Docker Hub](https://img.shields.io/docker/pulls/your-dockerhub-username/adguard-dns-query)](https://hub.docker.com/r/your-dockerhub-username/adguard-dns-query)
+[![Docker Hub](https://img.shields.io/docker/pulls/xiebaiyuan/adguard-dns-query)](https://hub.docker.com/r/xiebaiyuan/adguard-dns-query)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern web-based AdGuard DNS query service that helps you check if domains are blocked by AdGuard rules. Built with FastAPI backend and vanilla JavaScript frontend.
@@ -24,7 +24,7 @@ A modern web-based AdGuard DNS query service that helps you check if domains are
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/who-block-your-dns.git
+git clone https://github.com/xiebaiyuan/who-block-your-dns.git
 cd who-block-your-dns
 
 # Start with Docker Compose
@@ -53,8 +53,8 @@ python3 -m http.server 3000
 
 ```bash
 # Pull and run pre-built images
-docker run -d -p 8080:8080 your-dockerhub-username/adguard-dns-query:backend-latest
-docker run -d -p 3000:80 your-dockerhub-username/adguard-dns-query:frontend-latest
+docker run -d -p 8080:8080 xiebaiyuan/adguard-dns-query:backend-latest
+docker run -d -p 3000:80 xiebaiyuan/adguard-dns-query:frontend-latest
 ```
 
 ## 📱 Access
@@ -96,7 +96,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ### Quick Links
 - **Live API Docs**: http://localhost:8080/docs (when running locally)
-- **GitHub Repository**: [Source Code and Issues](https://github.com/your-username/who-block-your-dns)
+- **GitHub Repository**: [Source Code and Issues](https://github.com/xiebaiyuan/who-block-your-dns)
 - **Docker Hub**: [Pre-built Images](https://hub.docker.com/r/your-username/adguard-dns-query)
 
 ## 🧪 Testing
