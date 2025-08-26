@@ -80,6 +80,7 @@ fi
 
 echo ""
 echo "🎉 AdGuard域名查询服务已完全停止! (Python版本)"
-echo "📝 日志文件保留在以下位置:"
+echo "📝 日志文件和规则缓存保留在以下位置:"
 echo "   - backend-python/logs/"
+echo "   - backend-python/rules-cache/"
 echo "   - logs/"

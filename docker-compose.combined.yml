@@ -1,0 +1,34 @@
+# Combined Docker Compose Configuration
+# Single container with both frontend and backend
+
+version: '3.8'
+
+services:
+  who-block-your-dns:
+    build:
+      context: .
+      dockerfile: Dockerfile.combined
+    image: xiebaiyuan/who-block-your-dns:latest
+    container_name: who-block-your-dns
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - /share/ssd/adguard-dns-query/app/logs:/app/logs
+      - /share/ssd/adguard-dns-query/app/rules-cache:/app/rules-cache
+    networks:
+      - adguard-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/rules/statistics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  adguard-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: adguard-br

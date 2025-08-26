@@ -1,5 +1,8 @@
-// API配置
-const API_BASE_URL = 'http://localhost:8080/api';
+// API配置 - 智能检测运行环境
+// 在Docker环境中使用相对路径，在Python HTTP服务器环境中使用完整路径
+const API_BASE_URL = window.location.port === '80' || window.location.port === '' ? 
+    '/api' :  // Docker环境 (Nginx代理)
+    'http://localhost:8080/api';  // Python HTTP服务器环境
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {

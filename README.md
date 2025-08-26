@@ -81,6 +81,68 @@ docker-compose build backend
 
 See [Dependency Optimization Analysis](docs/DEPENDECY_OPTIMIZATION.md) for detailed benefits.
 
+### Option 6: Rule Caching (Faster Startup)
+
+This project includes rule caching to dramatically reduce startup time:
+
+```bash
+# Use the optimized configuration with rule caching
+docker-compose -f docker-compose.optimized-with-rules-cache.yml up -d
+```
+
+See [Rule Caching Feature](docs/RULE_CACHING.md) for detailed information.
+
+### Option 7: Combined Docker (Single Container)
+
+This project includes a combined Docker configuration that runs both frontend and backend in a single container:
+
+```bash
+# Build and run the combined container
+docker-compose -f docker-compose.combined.yml up -d
+
+# Or build manually
+docker build -f Dockerfile.combined -t xiebaiyuan/who-block-your-dns:latest .
+docker run -d -p 3000:80 \
+  -v /host/logs:/app/logs \
+  -v /host/rules-cache:/app/rules-cache \
+  --name who-block-your-dns \
+  xiebaiyuan/who-block-your-dns:latest
+```
+
+### Enhanced Docker Scripts
+
+The project includes enhanced Docker management scripts that support multiple configurations:
+
+```bash
+# Start with combined configuration (single container)
+./start-docker.sh --combined
+
+# Start with optimized configuration
+./start-docker.sh --optimized
+
+# Start with rule caching configuration
+./start-docker.sh --cached
+
+# Stop any configuration
+./stop-docker.sh --combined
+```
+
+### Python Version with Rule Caching
+
+The Python version also includes rule caching functionality for faster startup times:
+
+```bash
+# Start Python version with rule caching
+./start-python.sh
+
+# Stop Python version
+./stop-python.sh
+```
+
+Rules are automatically cached in `backend-python/rules-cache/` after the first run, dramatically reducing startup time for subsequent runs.
+
+See [Combined Docker Configuration](docs/COMBINED_DOCKER.md), [Docker Scripts Usage Guide](docs/DOCKER_SCRIPTS.md), and [Python Rule Caching](docs/PYTHON_RULE_CACHING.md) for detailed information.
+
 ## 📱 Access
 
 - **Frontend**: http://localhost:3000

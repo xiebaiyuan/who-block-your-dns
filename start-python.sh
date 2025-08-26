@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AdGuard域名查询服务 - Python版本启动脚本
+# AdGuard域名查询服务 - Python版本启动脚本 (支持规则缓存)
 
 echo "🐍 启动AdGuard域名查询服务 (Python版本)..."
 
@@ -35,6 +35,9 @@ pip install -r requirements.txt
 
 # 创建日志目录
 mkdir -p logs
+
+# 创建规则缓存目录（如果需要）
+mkdir -p rules-cache
 
 # 启动后端服务
 echo "🚀 启动Python后端服务..."
@@ -105,12 +108,10 @@ echo ""
 echo "📝 日志文件:"
 echo "   后端日志: backend-python/logs/backend.log"
 echo "   前端日志: logs/frontend.log"
+echo "   规则缓存: backend-python/rules-cache/"
 echo ""
 echo "🛑 停止服务:"
-echo "   kill $BACKEND_PID"
-if [ ! -z "$FRONTEND_PID" ]; then
-    echo "   kill $FRONTEND_PID"
-fi
+echo "   ./stop-python.sh"
 echo ""
 echo "🧪 Testing Commands:"
 echo "   Full test:    ./scripts/testing/final_test.sh"
@@ -121,6 +122,7 @@ echo "💡 Tips:"
 echo "   - First startup may take a few minutes to download and cache rules"
 echo "   - Visit http://localhost:8080/docs for interactive API documentation"
 echo "   - Python version starts faster with fewer dependencies"
+echo "   - Rules are cached in backend-python/rules-cache/ for faster restarts"
 echo ""
 echo "📚 Documentation: See docs/README.md for complete guides"
 

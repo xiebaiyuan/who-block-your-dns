@@ -2,6 +2,8 @@ import asyncio
 import re
 import time
 import threading
+import json
+import os
 from datetime import datetime
 from typing import List, Dict, Optional, Set, Union, Any
 from urllib.parse import urlparse
@@ -88,6 +90,10 @@ regex_rules: Dict[str, Set[re.Pattern]] = {}  # URL -> Set[Pattern]
 hosts_rules: Dict[str, Set[str]] = {}  # URL -> Set[domain]
 rule_sources: Dict[str, RuleSource] = {}  # URL -> RuleSource
 query_cache = TTLCache(maxsize=10000, ttl=3600)  # 1小时缓存
+
+# 规则缓存目录
+# 在Docker中使用/app/rules-cache，在Python版本中使用./rules-cache
+RULES_CACHE_DIR = os.environ.get('RULES_CACHE_DIR', './rules-cache')
 
 # 默认规则源配置
 DEFAULT_RULE_SOURCES = [
@@ -287,6 +293,94 @@ def is_valid_domain(domain: str) -> bool:
             not domain.endswith('.') and 
             '..' not in domain)
 
+def save_rules_to_cache():
+    """将规则保存到缓存文件"""
+    try:
+        # 确保缓存目录存在
+        os.makedirs(RULES_CACHE_DIR, exist_ok=True)
+        
+        # 保存域名规则
+        domain_rules_data = {}
+        for url, domains in domain_rules.items():
+            domain_rules_data[url] = list(domains)
+        
+        with open(os.path.join(RULES_CACHE_DIR, 'domain_rules.json'), 'w', encoding='utf-8') as f:
+            json.dump(domain_rules_data, f, ensure_ascii=False, indent=2)
+        
+        # 保存Hosts规则
+        hosts_rules_data = {}
+        for url, hosts in hosts_rules.items():
+            hosts_rules_data[url] = list(hosts)
+        
+        with open(os.path.join(RULES_CACHE_DIR, 'hosts_rules.json'), 'w', encoding='utf-8') as f:
+            json.dump(hosts_rules_data, f, ensure_ascii=False, indent=2)
+        
+        # 保存规则源信息
+        rule_sources_data = {}
+        for url, source in rule_sources.items():
+            rule_sources_data[url] = {
+                "url": source.url,
+                "name": source.name,
+                "enabled": source.enabled,
+                "last_updated": source.last_updated,
+                "rule_count": source.rule_count,
+                "status": source.status
+            }
+        
+        with open(os.path.join(RULES_CACHE_DIR, 'rule_sources.json'), 'w', encoding='utf-8') as f:
+            json.dump(rule_sources_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"规则已保存到缓存目录: {RULES_CACHE_DIR}")
+        
+    except Exception as e:
+        logger.error(f"保存规则到缓存失败: {e}")
+
+def load_rules_from_cache():
+    """从缓存文件加载规则"""
+    try:
+        global domain_rules, hosts_rules, rule_sources
+        
+        # 检查缓存目录是否存在
+        if not os.path.exists(RULES_CACHE_DIR):
+            logger.info(f"规则缓存目录不存在: {RULES_CACHE_DIR}")
+            return False
+        
+        # 加载域名规则
+        domain_rules_file = os.path.join(RULES_CACHE_DIR, 'domain_rules.json')
+        if os.path.exists(domain_rules_file):
+            with open(domain_rules_file, 'r', encoding='utf-8') as f:
+                domain_rules_data = json.load(f)
+                domain_rules = {}
+                for url, domains in domain_rules_data.items():
+                    domain_rules[url] = set(domains)
+            logger.info(f"已从缓存加载域名规则: {len(domain_rules)} 个源")
+        
+        # 加载Hosts规则
+        hosts_rules_file = os.path.join(RULES_CACHE_DIR, 'hosts_rules.json')
+        if os.path.exists(hosts_rules_file):
+            with open(hosts_rules_file, 'r', encoding='utf-8') as f:
+                hosts_rules_data = json.load(f)
+                hosts_rules = {}
+                for url, hosts in hosts_rules_data.items():
+                    hosts_rules[url] = set(hosts)
+            logger.info(f"已从缓存加载Hosts规则: {len(hosts_rules)} 个源")
+        
+        # 加载规则源信息
+        rule_sources_file = os.path.join(RULES_CACHE_DIR, 'rule_sources.json')
+        if os.path.exists(rule_sources_file):
+            with open(rule_sources_file, 'r', encoding='utf-8') as f:
+                rule_sources_data = json.load(f)
+                rule_sources = {}
+                for url, source_data in rule_sources_data.items():
+                    rule_sources[url] = RuleSource(**source_data)
+            logger.info(f"已从缓存加载规则源信息: {len(rule_sources)} 个源")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"从缓存加载规则失败: {e}")
+        return False
+
 def parse_rules(source: RuleSource, content: str) -> tuple:
     """解析规则内容"""
     lines = content.split('\n')
@@ -376,6 +470,12 @@ def update_rule_from_source(source: RuleSource):
         source.status = f"更新失败: {str(e)}"
         rule_sources[source.url] = source
 
+def update_rule_from_source_and_cache(source: RuleSource):
+    """从单个规则源更新规则并保存到缓存"""
+    update_rule_from_source(source)
+    # 保存规则到缓存
+    save_rules_to_cache()
+
 def update_all_rules():
     """更新所有规则"""
     logger.info("开始更新所有AdGuard规则...")
@@ -394,6 +494,9 @@ def update_all_rules():
     logger.info(f"域名规则源: {len(domain_rules)}, 总规则数: {sum(len(rules) for rules in domain_rules.values())}")
     logger.info(f"正则规则源: {len(regex_rules)}, 总规则数: {sum(len(rules) for rules in regex_rules.values())}")
     logger.info(f"Hosts规则源: {len(hosts_rules)}, 总规则数: {sum(len(rules) for rules in hosts_rules.values())}")
+    
+    # 保存规则到缓存
+    save_rules_to_cache()
 
 def query_domain_internal(domain: str) -> DomainQueryResult:
     """内部域名查询函数，支持返回多个匹配规则"""
@@ -516,13 +619,18 @@ async def startup_event():
     # 启动定时任务线程
     threading.Thread(target=schedule_checker, daemon=True).start()
     
-    # 初始化规则源
-    for source_data in DEFAULT_RULE_SOURCES:
-        source = RuleSource(**source_data)
-        rule_sources[source.url] = source
-    
-    # 后台更新规则
-    threading.Thread(target=update_all_rules, daemon=True).start()
+    # 尝试从缓存加载规则
+    if load_rules_from_cache():
+        logger.info("已从缓存加载规则，跳过初始规则下载")
+    else:
+        logger.info("未找到缓存规则，将下载规则")
+        # 初始化规则源
+        for source_data in DEFAULT_RULE_SOURCES:
+            source = RuleSource(**source_data)
+            rule_sources[source.url] = source
+        
+        # 后台更新规则
+        threading.Thread(target=update_all_rules, daemon=True).start()
 
 @app.get("/")
 async def root():
