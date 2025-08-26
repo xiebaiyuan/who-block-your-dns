@@ -57,6 +57,18 @@ docker run -d -p 8080:8080 xiebaiyuan/adguard-dns-query:backend-latest
 docker run -d -p 3000:80 xiebaiyuan/adguard-dns-query:frontend-latest
 ```
 
+### Option 4: Optimized Docker Compose (Recommended for Production)
+
+```bash
+# Use optimized configurations for better performance
+docker-compose -f docker-compose.optimized.yml up -d
+
+# For development with remote images (faster startup)
+docker-compose -f docker-compose.dev-optimized.yml up -d
+```
+
+See [Optimized Docker Compose Configurations](docs/deployment/DOCKER_COMPOSE_OPTIMIZED.md) for detailed usage instructions.
+
 ## 📱 Access
 
 - **Frontend**: http://localhost:3000

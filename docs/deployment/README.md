@@ -21,6 +21,17 @@ export DOCKER_USERNAME=your-dockerhub-username
 ./start-docker.sh
 ```
 
+**Optimized Deployment (Fastest Startup):**
+```bash
+# Use optimized configurations for better performance
+docker-compose -f docker-compose.optimized.yml up -d
+
+# For development with remote images (faster startup)
+docker-compose -f docker-compose.dev-optimized.yml up -d
+```
+
+See [Optimized Docker Compose Configurations](DOCKER_COMPOSE_OPTIMIZED.md) for detailed usage instructions.
+
 ## Deployment Environments
 
 ### Development Environment
@@ -63,6 +74,30 @@ DOCKER_USERNAME=your-username docker-compose -f docker-compose.prod.yml up -d
 # Or use the deployment script
 ./deploy-production.sh
 ```
+
+### Optimized Environments
+
+Uses `docker-compose.optimized.yml` or `docker-compose.dev-optimized.yml` for performance-optimized deployments.
+
+**Features:**
+- Resource limits for better performance
+- Pre-built images for faster startup
+- Volume and network optimizations
+- Custom health check configurations
+
+**Commands:**
+```bash
+# Production-optimized deployment
+docker-compose -f docker-compose.optimized.yml up -d
+
+# Development-optimized deployment (remote images)
+docker-compose -f docker-compose.dev-optimized.yml up -d
+
+# View logs
+docker-compose -f docker-compose.optimized.yml logs -f
+```
+
+See [Optimized Docker Compose Configurations](DOCKER_COMPOSE_OPTIMIZED.md) for detailed usage instructions.
 
 ## Platform-Specific Deployments
 
