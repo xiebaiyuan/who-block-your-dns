@@ -38,12 +38,13 @@ class APITester:
         try:
             response = self.session.get(f"{self.base_url}/api/rules/statistics")
             if response.status_code == 200:
-                stats = response.json()
+                result = response.json()
+                stats = result.get('data', {})
                 print(f"📊 统计信息:")
-                print(f"   域名规则: {stats['domain_rules']:,} 条")
-                print(f"   正则规则: {stats['regex_rules']:,} 条") 
-                print(f"   Hosts规则: {stats['hosts_rules']:,} 条")
-                print(f"   总规则源: {stats['total_sources']} 个")
+                print(f"   域名规则: {stats.get('domainRules', 0):,} 条")
+                print(f"   正则规则: {stats.get('regexRules', 0):,} 条") 
+                print(f"   Hosts规则: {stats.get('hostsRules', 0):,} 条")
+                print(f"   总规则源: {stats.get('totalSources', 0)} 个")
                 self.print_result("统计API", True)
                 return True
             else:
@@ -104,13 +105,15 @@ class APITester:
         blocked_count = 0
         for domain in blocked_domains:
             try:
-                response = self.session.get(f"{self.base_url}/api/rules/query", 
+                response = self.session.get(f"{self.base_url}/api/query/domain", 
                                           params={"domain": domain})
                 if response.status_code == 200:
                     result = response.json()
-                    matched = result.get('matched', False)
-                    matched_rule = result.get('matched_rule', '')
-                    rule_type = result.get('rule_type', '')
+                    # 数据格式是数组 [ [key, value], [key, value], ... ]
+                    data = dict(result.get('data', []))
+                    matched = data.get('blocked', False)
+                    matched_rule = data.get('matched_rule', '')
+                    rule_type = data.get('rule_type', '')
                     
                     if matched:
                         blocked_count += 1
@@ -127,17 +130,19 @@ class APITester:
         allowed_count = 0
         for domain in allowed_domains:
             try:
-                response = self.session.get(f"{self.base_url}/api/rules/query", 
+                response = self.session.get(f"{self.base_url}/api/query/domain", 
                                           params={"domain": domain})
                 if response.status_code == 200:
                     result = response.json()
-                    matched = result.get('matched', False)
+                    # 数据格式是数组 [ [key, value], [key, value], ... ]
+                    data = dict(result.get('data', []))
+                    matched = data.get('blocked', False)
                     
                     if not matched:
                         allowed_count += 1
                         self.print_result(f"域名 {domain}", True, "正确允许")
                     else:
-                        matched_rule = result.get('matched_rule', '')
+                        matched_rule = data.get('matched_rule', '')
                         self.print_result(f"域名 {domain}", False, f"被阻止: {matched_rule[:50]}...")
                 else:
                     self.print_result(f"域名 {domain}", False, f"HTTP {response.status_code}")
@@ -173,13 +178,15 @@ class APITester:
         
         for domain, description in test_cases:
             try:
-                response = self.session.get(f"{self.base_url}/api/rules/query", 
+                response = self.session.get(f"{self.base_url}/api/query/domain", 
                                           params={"domain": domain})
                 if response.status_code == 200:
                     result = response.json()
-                    matched = result.get('matched', False)
-                    matched_rule = result.get('matched_rule', '')
-                    rule_type = result.get('rule_type', '')
+                    # 数据格式是数组 [ [key, value], [key, value], ... ]
+                    data = dict(result.get('data', []))
+                    matched = data.get('blocked', False)
+                    matched_rule = data.get('matched_rule', '')
+                    rule_type = data.get('rule_type', '')
                     
                     if matched:
                         self.print_result(f"{description} ({domain})", True, 
@@ -206,17 +213,18 @@ class APITester:
         ]
         
         try:
-            response = self.session.post(f"{self.base_url}/api/rules/batch-query", 
+            response = self.session.post(f"{self.base_url}/api/query/domains", 
                                        json={"domains": domains})
             if response.status_code == 200:
-                results = response.json()
+                result = response.json()
+                results = result.get('data', [])
                 print(f"📦 批量查询结果:")
                 
-                for result in results['results']:
-                    domain = result['domain']
-                    matched = result['matched']
+                for item in results:
+                    domain = item['domain']
+                    matched = item['blocked']
                     status = "🚫 阻止" if matched else "✅ 允许"
-                    matched_rule = result.get('matched_rule', '')
+                    matched_rule = item.get('matched_rule', '')
                     rule_preview = matched_rule[:30] + "..." if len(matched_rule) > 30 else matched_rule
                     
                     print(f"   {status} {domain}")
@@ -255,7 +263,7 @@ class APITester:
         
         for domain, description in edge_cases:
             try:
-                response = self.session.get(f"{self.base_url}/api/rules/query", 
+                response = self.session.get(f"{self.base_url}/api/query/domain", 
                                           params={"domain": domain})
                 
                 if response.status_code == 200:
@@ -292,7 +300,7 @@ class APITester:
             for domain in test_domains:
                 try:
                     start_time = time.time()
-                    response = self.session.get(f"{self.base_url}/api/rules/query", 
+                    response = self.session.get(f"{self.base_url}/api/query/domain", 
                                               params={"domain": domain})
                     end_time = time.time()
                     

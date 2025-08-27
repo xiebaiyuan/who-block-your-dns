@@ -17,11 +17,12 @@ def test_basic_functionality():
     try:
         resp = requests.get(f"{BASE_URL}/api/rules/statistics")
         if resp.status_code == 200:
-            stats = resp.json()
+            result = resp.json()
+            stats = result.get('data', {})
             print(f"✅ 统计API正常")
-            print(f"   域名规则: {stats['domain_rules']:,}")
-            print(f"   正则规则: {stats['regex_rules']:,}")
-            print(f"   Hosts规则: {stats['hosts_rules']:,}")
+            print(f"   域名规则: {stats.get('domainRules', 0):,}")
+            print(f"   正则规则: {stats.get('regexRules', 0):,}")
+            print(f"   Hosts规则: {stats.get('hostsRules', 0):,}")
         else:
             print(f"❌ 统计API失败: {resp.status_code}")
     except Exception as e:
@@ -38,14 +39,16 @@ def test_basic_functionality():
     
     for domain, expected in test_domains:
         try:
-            resp = requests.get(f"{BASE_URL}/api/rules/query", params={"domain": domain})
+            resp = requests.get(f"{BASE_URL}/api/query/domain", params={"domain": domain})
             if resp.status_code == 200:
                 result = resp.json()
-                matched = result['matched']
+                # 数据格式是数组 [ [key, value], [key, value], ... ]
+                data = dict(result.get('data', []))
+                matched = data.get('blocked', False)
                 status = "🚫 阻止" if matched else "✅ 允许"
                 print(f"   {status} {domain} ({expected})")
                 if matched:
-                    rule = result.get('matched_rule', '')[:50]
+                    rule = data.get('matched_rule', '')[:50]
                     print(f"      匹配规则: {rule}...")
             else:
                 print(f"   ❌ {domain} 查询失败: {resp.status_code}")
@@ -56,13 +59,14 @@ def test_basic_functionality():
     print("\n📦 测试批量查询...")
     try:
         domains = ["doubleclick.net", "github.com", "google-analytics.com"]
-        resp = requests.post(f"{BASE_URL}/api/rules/batch-query", json={"domains": domains})
+        resp = requests.post(f"{BASE_URL}/api/query/domains", json={"domains": domains})
         if resp.status_code == 200:
-            results = resp.json()
+            result = resp.json()
+            results = result.get('data', [])
             print("✅ 批量查询正常")
-            for result in results['results']:
-                domain = result['domain']
-                matched = result['matched']
+            for item in results:
+                domain = item['domain']
+                matched = item['blocked']
                 status = "🚫" if matched else "✅"
                 print(f"   {status} {domain}")
         else:

@@ -375,3 +375,63 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// 批量查询函数
+async function bulkQuery() {
+    const bulkInput = document.getElementById('bulkInput');
+    if (!bulkInput) return;
+    
+    const domainsText = bulkInput.value.trim();
+    if (!domainsText) {
+        showMessage('请输入要查询的域名', 'error');
+        return;
+    }
+    
+    // 解析域名列表
+    const domains = domainsText.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .slice(0, 100); // 限制最多100个域名
+    
+    if (domains.length === 0) {
+        showMessage('没有有效的域名', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('bulkQueryBtn');
+    const origText = btn ? btn.textContent : null;
+    
+    try {
+        if (btn) {
+            btn.textContent = '查询中...';
+            btn.disabled = true;
+        }
+        
+        // 发送批量查询请求
+        const response = await fetch(`${API_BASE_URL}/query/domains`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ domains: domains })
+        });
+        
+        const result = await response.json();
+        
+        if (result.code === 200) {
+            // 显示查询结果
+            displayQueryResults(result.data || []);
+            showMessage(`批量查询完成，共查询 ${domains.length} 个域名`, 'success');
+        } else {
+            showMessage(result.message || '批量查询失败', 'error');
+        }
+    } catch (error) {
+        console.error('bulkQuery', error);
+        showMessage('网络错误，无法查询', 'error');
+    } finally {
+        if (btn) {
+            btn.textContent = origText;
+            btn.disabled = false;
+        }
+    }
+}
+
