@@ -3,16 +3,16 @@
 
 services:
   backend:
-    image: ${DOCKER_USERNAME}/adguard-dns-query:backend-latest
+    image: xiebaiyuan/who-block-your-dns:backend-v1.20250826.14
     container_name: adguard-backend
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "49225:8080"
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - backend_logs:/app/logs
+      - /share/ssd/adguard-dns-query/app/logs:/app/logs
     networks:
       - adguard-network
     healthcheck:
@@ -23,11 +23,11 @@ services:
       start_period: 40s
 
   frontend:
-    image: ${DOCKER_USERNAME}/adguard-dns-query:frontend-latest
+    image: xiebaiyuan/who-block-your-dns:frontend-v1.20250826.14
     container_name: adguard-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "49226:80"
     depends_on:
       backend:
         condition: service_healthy

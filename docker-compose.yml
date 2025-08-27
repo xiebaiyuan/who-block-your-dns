@@ -7,7 +7,7 @@ services:
     build: 
       context: ./backend-python
       dockerfile: Dockerfile
-    container_name: adguard-backend-dev
+    container_name: whoblocku-backend-dev
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8080}:8080"
@@ -19,7 +19,7 @@ services:
       # Mount source code for development
       - ./backend-python:/app
     networks:
-      - adguard-network
+      - whoblocku-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/rules/statistics"]
       interval: 30s
@@ -32,7 +32,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: adguard-frontend-dev
+    container_name: whoblocku-frontend-dev
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"
@@ -43,7 +43,7 @@ services:
       # Mount source code for development
       - ./frontend:/usr/share/nginx/html:ro
     networks:
-      - adguard-network
+      - whoblocku-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
@@ -55,5 +55,5 @@ volumes:
     driver: local
 
 networks:
-  adguard-network:
+  whoblocku-network:
     driver: bridge

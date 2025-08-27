@@ -1,5 +1,26 @@
-// API配置 - 使用相对路径，通过Nginx代理转发到后端
-const API_BASE_URL = '/api';
+// API配置 - 根据运行环境自动选择后端地址（支持 Docker/Nginx 代理 和 直接用 Python 启动）
+// 规则：
+// 1. 如果页面在本地用 python http.server (默认端口 3000) 启动，则后端通常在 http://localhost:8080 -> 使用完整 URL 避开 CORS。
+// 2. 其它情况下（例如 Docker 下前端由 Nginx 代理），使用相对路径 '/api' 以便通过代理转发。
+// 3. 支持通过 window.__API_BASE_URL 手动覆盖（用于调试或特殊部署）。
+const API_BASE_URL = (function() {
+    // 手动覆盖优先
+    if (window.__API_BASE_URL) return window.__API_BASE_URL.replace(/\/$/, '');
+
+    const loc = window.location;
+    const host = loc.hostname;
+    const port = loc.port;
+
+    // 如果是在本地通过 python http.server（或其它本地静态服务器）运行，或访问地址为 0.0.0.0 / ::1，
+    // 或者页面正在使用 3000 端口（常见于开发时用 python 或 npm 启动前端），则使用后端完整地址以避免被静态服务器拦截并返回 HTML。
+    const localHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+    if (port === '3000' || localHosts.includes(host)) {
+        return 'http://localhost:8080/api';
+    }
+
+    // 默认使用相对路径，交给前端代理（Docker + Nginx）处理
+    return '/api';
+})();
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
