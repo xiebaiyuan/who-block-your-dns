@@ -2,6 +2,9 @@ import asyncio
 import re
 import time
 import threading
+import os
+import hashlib
+from urllib.parse import urlparse
 from datetime import datetime
 from typing import List, Dict, Optional, Set, Union, Any
 from urllib.parse import urlparse
@@ -354,6 +357,26 @@ def update_rule_from_source(source: RuleSource):
             rule_sources[source.url] = source
             return
         
+        # 保存下载的原始规则到可挂载目录，便于 Docker 挂载查看/调试
+        try:
+            rules_dir = os.environ.get('RULES_DIR', 'data/rules')
+            os.makedirs(rules_dir, exist_ok=True)
+            parsed = urlparse(source.url)
+            safe_name = (parsed.netloc + parsed.path).strip()
+            if not safe_name:
+                # fallback to hash
+                safe_name = hashlib.sha256(source.url.encode('utf-8')).hexdigest()
+            # 替换不安全字符
+            safe_name = re.sub(r'[^0-9a-zA-Z._-]', '_', safe_name)
+            if not safe_name.lower().endswith('.txt'):
+                safe_name = safe_name + '.txt'
+            file_path = os.path.join(rules_dir, safe_name)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            logger.info(f"已保存规则源到: {file_path}")
+        except Exception as e:
+            logger.warning(f"保存规则文件失败: {source.url} - {e}")
+
         domains, regexes, hosts, rule_count = parse_rules(source, content)
         
         # 存储规则
@@ -497,6 +520,18 @@ def get_rule_source_name(url: str) -> str:
     source = rule_sources.get(url)
     return source.name if source else url
 
+
+def rule_source_to_dict(source: RuleSource) -> dict:
+    """将 RuleSource 转换为前端期望的 camelCase 字段格式"""
+    return {
+        'url': source.url,
+        'name': source.name,
+        'enabled': source.enabled,
+        'lastUpdated': source.last_updated,
+        'ruleCount': source.rule_count,
+        'status': source.status
+    }
+
 # 定时任务
 def schedule_checker():
     """定时任务检查器"""
@@ -593,7 +628,7 @@ async def query_domains(request: BulkQueryRequest):
 async def get_rule_sources():
     """获取所有规则源"""
     try:
-        sources = list(rule_sources.values())
+        sources = [rule_source_to_dict(s) for s in rule_sources.values()]
         return ApiResponse(
             code=200,
             message="获取成功",
@@ -610,28 +645,59 @@ async def add_rule_source(source: RuleSource, background_tasks: BackgroundTasks)
     try:
         if not source.url or not source.url.strip():
             raise HTTPException(status_code=400, detail="规则源URL不能为空")
-        
+
         if not source.name or not source.name.strip():
             raise HTTPException(status_code=400, detail="规则源名称不能为空")
-        
+
         # 添加到规则源列表
         rule_sources[source.url] = source
-        
+
         # 如果启用，后台更新规则
         if source.enabled:
             background_tasks.add_task(update_rule_from_source, source)
-        
+
         return ApiResponse(
             code=200,
             message="规则源添加成功",
+            data=rule_source_to_dict(source),
             timestamp=int(time.time() * 1000)
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"添加规则源失败: {source.name if source else 'Unknown'} - {e}")
         raise HTTPException(status_code=500, detail=f"添加规则源失败: {str(e)}")
+
+
+@app.post("/api/rules/refresh_one")
+async def refresh_one_rule(url: str, background_tasks: BackgroundTasks):
+    """刷新单个规则源（后台执行）"""
+    try:
+        if not url or not url.strip():
+            raise HTTPException(status_code=400, detail="规则源URL不能为空")
+
+        source = rule_sources.get(url)
+        if not source:
+            raise HTTPException(status_code=404, detail="未找到指定的规则源")
+
+        # 清理查询缓存
+        query_cache.clear()
+
+        # 后台更新单个源
+        background_tasks.add_task(update_rule_from_source, source)
+
+        return ApiResponse(
+            code=200,
+            message="单个规则刷新已开始，请稍后查看该源的状态",
+            data=rule_source_to_dict(source),
+            timestamp=int(time.time() * 1000)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"刷新单个规则源失败: {url} - {e}")
+        raise HTTPException(status_code=500, detail=f"刷新单个规则源失败: {str(e)}")
 
 @app.delete("/api/rules/sources")
 async def remove_rule_source(url: str):

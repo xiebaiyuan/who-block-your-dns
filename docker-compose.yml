@@ -14,10 +14,13 @@ services:
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - RULES_DIR=/app/data/rules
     volumes:
       - backend_logs:/app/logs
       # Mount source code for development
       - ./backend-python:/app
+      # Persist downloaded rule files so they can be inspected/挂载
+      - ./rules:/app/data/rules
     networks:
       - whoblocku-network
     healthcheck:

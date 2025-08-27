@@ -73,12 +73,13 @@ cd frontend
 # 检查Python3是否可用启动HTTP服务器
 if command -v python3 &> /dev/null; then
     echo "🐍 使用Python3启动前端服务..."
-    python3 -m http.server 3000 > ../logs/frontend.log 2>&1 &
+        # 显式绑定到 0.0.0.0，避免只绑定到 IPv6 本地回环 (::1)
+        python3 -m http.server 3000 --bind 0.0.0.0 > ../logs/frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo "🎯 前端服务已启动 (PID: $FRONTEND_PID)"
 elif command -v python &> /dev/null; then
     echo "🐍 使用Python启动前端服务..."
-    python -m http.server 3000 > ../logs/frontend.log 2>&1 &
+        python -m http.server 3000 --bind 0.0.0.0 > ../logs/frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo "🎯 前端服务已启动 (PID: $FRONTEND_PID)"
 else

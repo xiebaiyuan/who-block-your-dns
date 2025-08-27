@@ -10,6 +10,10 @@ services:
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # 代理配置(可选)
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-}
     volumes:
       - /share/ssd/adguard-dns-query/app/logs:/app/logs
     # 移除 network_mode: bridge
