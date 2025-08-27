@@ -82,10 +82,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
           tags: |
-            xiebaiyuan/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
-            xiebaiyuan/adguard-dns-query:backend-latest
-            xiebaiyuan/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}
-            xiebaiyuan/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}
+            xiebaiyuan/who-block-you:backend-${{ steps.meta.outputs.VERSION }}
+            xiebaiyuan/who-block-you:backend-latest
+            xiebaiyuan/who-block-you:backend-${{ steps.meta.outputs.BUILD_DATE }}
+            xiebaiyuan/who-block-you:backend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Backend
             org.opencontainers.image.description=FastAPI backend for AdGuard DNS query service
@@ -166,10 +166,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64
           tags: |
-            xiebaiyuan/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
-            xiebaiyuan/adguard-dns-query:frontend-latest
-            xiebaiyuan/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}
-            xiebaiyuan/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
+            xiebaiyuan/who-block-you:frontend-${{ steps.meta.outputs.VERSION }}
+            xiebaiyuan/who-block-you:frontend-latest
+            xiebaiyuan/who-block-you:frontend-${{ steps.meta.outputs.BUILD_DATE }}
+            xiebaiyuan/who-block-you:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}
           labels: |
             org.opencontainers.image.title=AdGuard DNS Query Frontend
             org.opencontainers.image.description=Nginx frontend for AdGuard DNS query service
@@ -227,16 +227,16 @@ jobs:
             ### 📦 Docker Images
             
             **Backend Images:**
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-latest`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.BUILD_DATE }}`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-sha-${{ steps.meta.outputs.GIT_SHA }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:backend-${{ steps.meta.outputs.VERSION }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:backend-latest`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:backend-${{ steps.meta.outputs.BUILD_DATE }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:backend-sha-${{ steps.meta.outputs.GIT_SHA }}`
             
             **Frontend Images:**
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-latest`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.BUILD_DATE }}`
-            - `${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:frontend-${{ steps.meta.outputs.VERSION }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:frontend-latest`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:frontend-${{ steps.meta.outputs.BUILD_DATE }}`
+            - `${{ secrets.DOCKER_USERNAME }}/who-block-you:frontend-sha-${{ steps.meta.outputs.GIT_SHA }}`
             
             ### 🔧 Build Information
             - **Build Date**: ${{ steps.meta.outputs.BUILD_DATE }}
@@ -255,8 +255,8 @@ jobs:
             ./deploy-production.sh
             
             # Using specific version
-            docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:backend-${{ steps.meta.outputs.VERSION }}
-            docker run -d -p 3000:80 ${{ secrets.DOCKER_USERNAME }}/adguard-dns-query:frontend-${{ steps.meta.outputs.VERSION }}
+            docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/who-block-you:backend-${{ steps.meta.outputs.VERSION }}
+            docker run -d -p 3000:80 ${{ secrets.DOCKER_USERNAME }}/who-block-you:frontend-${{ steps.meta.outputs.VERSION }}
             ```
             
             ### 📚 Documentation
