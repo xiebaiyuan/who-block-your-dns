@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   backend:
-    image: xiebaiyuan/who-block-you:backend-v1.20250827.17
+    image: xiebaiyuan/who-block-you:backend-v1.20250827.19
     container_name: adguard-backend
     restart: unless-stopped
     ports:
@@ -12,24 +12,41 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - RULES_DIR=/app/data/rules
       # 代理配置(可选)
-      - HTTP_PROXY=${HTTP_PROXY:-}
-      - HTTPS_PROXY=${HTTPS_PROXY:-}
-      - NO_PROXY=${NO_PROXY:-}
+      - HTTP_PROXY=http://xxx:1080
+      - HTTPS_PROXY=http://xxx:1080
+      - NO_PROXY=12.0.0.0/8,localhost,127.0.0.1
     volumes:
       - /share/ssd/adguard-dns-query/app/logs:/app/logs
-            # Mount source code for development
-      # Persist downloaded rule files so they can be inspected/挂载
+      # Persist downloaded rule files so they can be inspected
       - /share/ssd/adguard-dns-query/app/rules:/app/data/rules
-    # 移除 network_mode: bridge
+    networks:
+      - whoblocku-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/rules/statistics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
-    image: xiebaiyuan/who-block-you:frontend-v1.20250827.17
+    image: xiebaiyuan/who-block-you:frontend-v1.20250827.19
     container_name: adguard-frontend
     restart: unless-stopped
     ports:
       - "49226:80"
     environment:
       - BACKEND_URL=http://backend:8080
-    # 移除 network_mode: bridge
+    networks:
+      - whoblocku-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  whoblocku-network:
+    driver: bridge
