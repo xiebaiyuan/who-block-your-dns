@@ -65,7 +65,7 @@ function displayRuleSources(sources) {
                     <span class="rule-toggle">展开</span>
                 </div>
                 <div class="rule-url-details" id="rule-url-details-${idx}" style="display:none;">
-                    <a href="${s.url}" target="_blank">${s.url}</a>
+                    <a href="${s.url}" target="_blank" class="rule-full-url">${s.url}</a>
                 </div>
                 <div class="rule-details">
                     <div class="rule-meta">
@@ -343,7 +343,18 @@ function fallbackCopy(text, btnEl) {
 
 function getStatusClass(status) { if (!status) return 'status-warning'; if ((status||'').indexOf('成功') !== -1) return 'status-success'; if ((status||'').indexOf('失败') !== -1 || (status||'').indexOf('错误') !== -1) return 'status-error'; return 'status-warning'; }
 
-function toggleRuleUrl(i) { const d = document.getElementById(`rule-url-details-${i}`); if (!d) return; const t = d.previousElementSibling.querySelector('.rule-toggle'); if (d.style.display === 'block') { d.style.display = 'none'; t.textContent = '展开'; } else { d.style.display = 'block'; t.textContent = '收起'; } }
+function toggleRuleUrl(i) { 
+    const d = document.getElementById(`rule-url-details-${i}`); 
+    if (!d) return; 
+    const t = d.previousElementSibling.querySelector('.rule-toggle'); 
+    if (d.style.display === 'block') { 
+        d.style.display = 'none'; 
+        t.textContent = '展开'; 
+    } else { 
+        d.style.display = 'block'; 
+        t.textContent = '收起'; 
+    } 
+}
 
 async function handleAddRule(e) { if (e && e.preventDefault) e.preventDefault(); const name = (document.getElementById('ruleName') || {}).value || ''; const url = (document.getElementById('ruleUrl') || {}).value || ''; const enabled = !!(document.getElementById('ruleEnabled') || {}).checked; if (!name || !url) { showMessage('请填写完整信息', 'error'); return; } try { const resp = await fetch(`${API_BASE_URL}/rules/sources`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, url, enabled }) }); const j = await resp.json(); if (j.code === 200) { showMessage('规则源添加成功', 'success'); loadRuleSources(); loadStatistics(); } else showMessage(j.message || '添加失败', 'error'); } catch (e) { console.error('handleAddRule', e); showMessage('网络错误', 'error'); } }
 
