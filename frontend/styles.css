@@ -329,6 +329,57 @@ section h2 {
     gap: 10px;
 }
 
+/* Copy button and matched rules styling */
+.matched-rules, .matched-rule-item, .search-item {
+    margin-top: 8px;
+}
+
+.matched-rule-item, .search-item {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e6e9ea;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.matched-rule-text, .search-rule {
+    flex: 1 1 auto;
+    font-size: 14px;
+    color: #2c3e50;
+    word-break: break-word;
+}
+
+.matched-rule-meta, .search-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.source-link {
+    color: #2176bd;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.copy-btn {
+    background: #2176bd;
+    color: #fff;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.copy-btn:hover { transform: translateY(-1px); }
+
+.matched-rule-source, .search-type {
+    font-size: 12px;
+    color: #666;
+}
+
 .delete-btn {
     background: #c08a8a;
     color: white;
