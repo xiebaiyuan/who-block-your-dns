@@ -1,0 +1,22 @@
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # 静态资源及 SPA 路由回退
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # 把 /api/ 转发到后端服务，BACKEND_URL 由环境变量提供
+  location /api/ {
+    proxy_pass http://backend:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location = /favicon.ico { access_log off; log_not_found off; }
+}

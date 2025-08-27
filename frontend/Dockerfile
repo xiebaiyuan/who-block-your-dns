@@ -1,32 +1,21 @@
-# Frontend Dockerfile - 基于Nginx的静态文件服务器
 FROM nginx:alpine
 
-# 复制前端文件到nginx默认目录
+# Frontend Dockerfile - 基于 Nginx 的静态文件服务器
+
+# 复制静态文件到 nginx 默认目录
 COPY . /usr/share/nginx/html
 
-# 创建nginx配置文件
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html; \
-        try_files $uri $uri/ =404; \
-    } \
-    \
-    location /api { \
-        proxy_pass http://backend:8080; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-        proxy_set_header X-Forwarded-Host $host; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# 复制 nginx 配置模板和启动脚本
+COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
-# 暴露端口
+# 在 alpine 中安装 envsubst（来自 gettext）用于渲染模板
+RUN apk add --no-cache gettext \
+    && chmod +x /docker-entrypoint.sh
+
+# 默认后端地址（可在运行容器时通过环境变量覆盖）
+ENV BACKEND_URL=http://backend:8080
+
 EXPOSE 80
 
-# 启动nginx
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

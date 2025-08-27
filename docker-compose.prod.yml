@@ -1,48 +1,25 @@
-# Production Docker Compose Configuration
-# Uses pre-built images from Docker Hub
+version: "3.8"
 
 services:
   backend:
-    image: xiebaiyuan/who-block-your-dns:backend-v1.20250826.14
+    image: xiebaiyuan/who-block-you:backend-v1.20250827.16
     container_name: adguard-backend
     restart: unless-stopped
     ports:
-      - "49225:8080"
+      - "49225:8080"          # 或改为 "49225:8080" 如果你需要保持原来端口
     environment:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
       - /share/ssd/adguard-dns-query/app/logs:/app/logs
-    networks:
-      - adguard-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/rules/statistics"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
+    network_mode: bridge
+    
   frontend:
-    image: xiebaiyuan/who-block-your-dns:frontend-v1.20250826.14
+    image: xiebaiyuan/who-block-you:frontend-v1.20250827.16
     container_name: adguard-frontend
     restart: unless-stopped
     ports:
-      - "49226:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - adguard-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  backend_logs:
-    driver: local
-
-networks:
-  adguard-network:
-    driver: bridge
+      - "49226:80"              # 或改为 "49226:80"
+    environment:
+      - BACKEND_URL=http://backend:8080   # 运行时会被 frontend 镜像的 entrypoint 用来渲染 nginx 配置
+    network_mode: bridge

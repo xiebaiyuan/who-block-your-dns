@@ -39,6 +39,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      - BACKEND_URL=http://backend:8080   # 运行时会被 frontend 镜像的 entrypoint 用来渲染 nginx 配置
     volumes:
       # Mount source code for development
       - ./frontend:/usr/share/nginx/html:ro
