@@ -110,3 +110,4 @@ node_modules/
 *.sw?
 .claude
 .DS_Store
+rules
