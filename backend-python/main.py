@@ -4,6 +4,7 @@ import time
 import threading
 import os
 import hashlib
+import json
 from urllib.parse import urlparse
 from datetime import datetime
 from typing import List, Dict, Optional, Set, Union, Any
@@ -91,6 +92,7 @@ regex_rules: Dict[str, Set[re.Pattern]] = {}  # URL -> Set[Pattern]
 hosts_rules: Dict[str, Set[str]] = {}  # URL -> Set[domain]
 rule_sources: Dict[str, RuleSource] = {}  # URL -> RuleSource
 query_cache = TTLCache(maxsize=10000, ttl=3600)  # 1小时缓存
+all_default_sources: List[RuleSource] = []  # 所有默认规则源（包括配置文件）
 
 # 默认规则源配置
 DEFAULT_RULE_SOURCES = [
@@ -274,6 +276,31 @@ DEFAULT_RULE_SOURCES = [
 
 ]
 
+def load_rule_sources() -> List[RuleSource]:
+    """加载规则源配置，支持外部配置文件"""
+    config_file = os.environ.get('RULE_SOURCES_CONFIG_FILE', 'data/rule_sources.json')
+    
+    # 如果是相对路径，相对于backend-python目录
+    if not os.path.isabs(config_file):
+        # 获取当前脚本所在目录
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file = os.path.join(script_dir, config_file)
+    
+    if os.path.exists(config_file):
+        try:
+            logger.info(f"从配置文件加载规则源: {config_file}")
+            with open(config_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                sources = [RuleSource(**item) for item in data]
+                logger.info(f"从配置文件加载了 {len(sources)} 个规则源")
+                return sources
+        except Exception as e:
+            logger.error(f"加载配置文件失败: {config_file} - {e}，使用默认配置")
+            return [RuleSource(**item) for item in DEFAULT_RULE_SOURCES]
+    else:
+        logger.info(f"配置文件不存在: {config_file}，使用默认配置")
+        return [RuleSource(**item) for item in DEFAULT_RULE_SOURCES]
+
 def is_valid_domain(domain: str) -> bool:
     """验证域名格式"""
     if not domain or not isinstance(domain, str):
@@ -403,14 +430,15 @@ def update_all_rules():
     """更新所有规则"""
     logger.info("开始更新所有AdGuard规则...")
     
-    for source_data in DEFAULT_RULE_SOURCES:
-        if source_data["enabled"]:
-            source = RuleSource(**source_data)
+    # 更新默认规则源（包括配置文件中的）
+    for source in all_default_sources:
+        if source.enabled:
             update_rule_from_source(source)
     
     # 更新自定义规则源
+    default_urls = {s.url for s in all_default_sources}
     for source in list(rule_sources.values()):
-        if source.enabled and source.url not in [s["url"] for s in DEFAULT_RULE_SOURCES]:
+        if source.enabled and source.url not in default_urls:
             update_rule_from_source(source)
     
     logger.info("规则更新完成")
@@ -546,14 +574,17 @@ schedule.every(6).hours.do(update_all_rules)
 @app.on_event("startup")
 async def startup_event():
     """应用启动时初始化"""
+    global all_default_sources
     logger.info("启动AdGuard域名查询服务...")
     
     # 启动定时任务线程
     threading.Thread(target=schedule_checker, daemon=True).start()
     
+    # 加载规则源配置
+    all_default_sources = load_rule_sources()
+    
     # 初始化规则源
-    for source_data in DEFAULT_RULE_SOURCES:
-        source = RuleSource(**source_data)
+    for source in all_default_sources:
         rule_sources[source.url] = source
     
     # 后台更新规则

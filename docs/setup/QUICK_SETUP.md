@@ -75,6 +75,61 @@ The GitHub Actions workflow automatically builds for:
 - `linux/amd64` (Intel/AMD 64-bit)
 - `linux/arm64` (ARM 64-bit/Apple Silicon)
 
+## ⚙️ Configuration
+
+### Rule Sources Configuration
+
+The service supports external configuration for rule sources. You can customize which ad-blocking rules to use by creating a configuration file.
+
+#### Using External Configuration File
+
+1. **Create configuration file**:
+   ```bash
+   # In the backend-python directory
+   mkdir -p data
+   cp data/rule_sources.json data/rule_sources.json.backup  # Backup default
+   # Edit data/rule_sources.json with your preferred rule sources
+   ```
+
+2. **Configuration file format** (`data/rule_sources.json`):
+   ```json
+   [
+     {
+       "url": "https://example.com/rules.txt",
+       "name": "Custom Rule Source",
+       "enabled": true
+     }
+   ]
+   ```
+
+3. **Docker environment variable** (for Docker deployments):
+   ```bash
+   # Set the path to your configuration file
+   export RULE_SOURCES_CONFIG_FILE=/path/to/your/rule_sources.json
+   ```
+
+4. **Default behavior**:
+   - If no external config file exists, uses built-in default rules
+   - Configuration file supports JSON format with the same structure as default rules
+   - Each rule source can be enabled/disabled individually
+
+#### Example Custom Configuration
+
+```json
+[
+  {
+    "url": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+    "name": "AdGuard Base",
+    "enabled": true
+  },
+  {
+    "url": "https://easylist-downloads.adblockplus.org/easylist.txt",
+    "name": "EasyList",
+    "enabled": true
+  }
+]
+```
+
 ## 🔍 Verification
 
 Test your setup:

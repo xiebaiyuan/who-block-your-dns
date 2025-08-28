@@ -1,0 +1,177 @@
+[
+    {
+        "url": "https://raw.githubusercontent.com/xiebaiyuan/adrule/refs/heads/main/rule/adgh.txt",
+        "name": "mine adgh",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/xiebaiyuan/adrule/refs/heads/adrules/adblock_lite.txt",
+        "name": "mine adblock lite",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/durablenapkin/scamblocklist/refs/heads/master/adguard.txt",
+        "name": "Scam Blocklist",
+        "enabled": true
+    },
+    {
+        "url": "https://someonewhocares.org/hosts/zero/hosts",
+        "name": "Dan Pollock's List",
+        "enabled": true
+    },
+    {
+        "url": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=1&mimetype=plaintext",
+        "name": "Peter Lowe's List",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/refs/heads/master/data/hosts/spy.txt",
+        "name": "WindowsSpyBlocker",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts",
+        "name": "DaSheng Ad Clean",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+        "name": "AdGuard Base",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_trackers.txt",
+        "name": "AdGuard CNAME disguised tracker list",
+        "enabled": true
+    },
+    {
+        "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+        "name": "AdGuard DNS filter",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/Crystal-RainSlide/AdditionalFiltersCN/master/CN.txt",
+        "name": "AdditionalFiltersCN",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt",
+        "name": "ADgk mobile ad rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt",
+        "name": "ChengFeng ad filter rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt",
+        "name": "ChengFeng video filter rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/o0HalfLife0o/list/master/ad.txt",
+        "name": "HalfLife merged rules",
+        "enabled": true
+    },
+    {
+        "url": "https://adaway.org/hosts.txt",
+        "name": "AdAway official ad-blocking Host rules",
+        "enabled": true
+    },
+    {
+        "url": "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt",
+        "name": "Remove anti-adblock warning rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
+        "name": "XingShao AdRules DNS List",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/AdGuard/Advertising/Advertising.txt",
+        "name": "AdGuard blackmatrix7 merged",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/zsakvo/AdGuard-Custom-Rule/master/rule/zhihu.txt",
+        "name": "Zhihu standard version",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/timlu85/AdGuard-Home_Youtube-Adfilter/master/Youtube-Adfilter-Web.txt",
+        "name": "Youtube-Adfilter-Web",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
+        "name": "Autumn Wind ad rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/ilxp/koolproxy/refs/heads/main/rules/adg.txt",
+        "name": "koolproxy adg rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/ilxp/koolproxy/refs/heads/main/rules/antiad.txt",
+        "name": "koolproxy antiad rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/filters.txt",
+        "name": "uBlock filters",
+        "enabled": true
+    },
+    {
+        "url": "https://ublockorigin.pages.dev/filters/badware.txt",
+        "name": "uBlock filters – Badware risks",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssetsCDN/refs/heads/main/filters/privacy.min.txt",
+        "name": "uBlock filters – Privacy",
+        "enabled": true
+    },
+    {
+        "url": "https://ublockorigin.github.io/uAssets/filters/quick-fixes.txt",
+        "name": "uBlock filters – Quick fixes",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/resource-abuse.txt",
+        "name": "uBlock filters – Resource abuse",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssetsCDN/refs/heads/main/filters/unbreak.txt",
+        "name": "uBlock filters – Unbreak",
+        "enabled": true
+    },
+    {
+        "url": "https://filters.adtidy.org/extension/ublock/filters/11.txt",
+        "name": "AdGuard Mobile Ads",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/thhbdd/Block-pcdn-domains/refs/heads/main/ban.txt",
+        "name": "Block PCDN domains",
+        "enabled": true
+    },
+    {
+        "url": "https://anti-ad.net/easylist.txt",
+        "name": "anti-AD",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/pcdn.txt",
+        "name": "anti-AD PCDN rules",
+        "enabled": true
+    },
+    {
+        "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/discretion/dns.txt",
+        "name": "anti-AD httpdns",
+        "enabled": true
+    }
+]

@@ -15,6 +15,7 @@ services:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - RULES_DIR=/app/data/rules
+      - RULE_SOURCES_CONFIG_FILE=${RULE_SOURCES_CONFIG_FILE:-/app/data/rule_sources.json}
     volumes:
       - backend_logs:/app/logs
       # Mount source code for development

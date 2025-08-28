@@ -11,6 +11,7 @@ services:
       - PYTHONPATH=/app
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - RULES_DIR=/app/data/rules
+      - RULE_SOURCES_CONFIG_FILE=${RULE_SOURCES_CONFIG_FILE:-/app/data/rule_sources.json}
       # 代理配置(可选)
       - HTTP_PROXY=http://xxx:1080
       - HTTPS_PROXY=http://xxx:1080

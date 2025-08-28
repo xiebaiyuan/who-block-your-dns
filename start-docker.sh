@@ -4,6 +4,8 @@
 
 echo "🐳 启动AdGuard域名查询服务 (Docker版本)..."
 
+export COMPOSE_BAKE=true
+
 # 检查Docker环境
 if ! command -v docker &> /dev/null; then
     echo "❌ 错误: 未找到Docker，请安装Docker"
